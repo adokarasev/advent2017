@@ -2,6 +2,7 @@ package recursive
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -45,49 +46,67 @@ func (t *tower) update(w int) {
 	}
 }
 
-func (t *tower) addChild(c *tower) {
-	fmt.Println("Add child", c.name, "to", t.name)
+func (t *tower) addChild(c *tower) *tower {
 	c.parent = t
 	t.children = append(t.children, c)
 	t.update(c.weight)
+	return c
+}
+
+func (t *tower) String() string {
+	return fmt.Sprint("{", t.name, ",", t.weight, ",", len(t.children), "}")
 }
 
 // BalanceTower returns the name and weight of program to make tower balanced
-func BalanceTower(data string) (string, int) {
-	towers := make(map[string]tower)
+func BalanceTower(data string) int {
+	towers := make(map[string]*tower)
 	lines := bufio.NewScanner(strings.NewReader(data))
 	re := regexp.MustCompile(`[a-z0-9]+`)
 	for lines.Scan() {
 		t := re.FindAllString(lines.Text(), -1)
 		w, _ := strconv.Atoi(t[1])
-
 		r, ok := towers[t[0]]
 		if !ok {
-			fmt.Println("Create new parent", t[0], w)
-			r = tower{name: t[0], weight: w}
-			towers[t[0]] = r
+			r = &tower{name: t[0], weight: w}
 		} else {
-			fmt.Println("Just update it", r)
 			r.update(w)
 		}
 
 		for _, v := range t[2:] {
 			c, ok := towers[v]
 			if !ok {
-				c = tower{name: v, weight: 0}
-				towers[v] = c
+				c = &tower{name: v, weight: 0}
 			}
-			r.addChild(&c)
-			fmt.Println("Added child", c, "to", r)
+			towers[v] = r.addChild(c)
+		}
+
+		towers[t[0]] = r
+	}
+
+	r, _ := getTowerRoot(towers)
+	var (
+		minW = r.children[0].weight
+		maxW = r.children[0].weight
+	)
+
+	for _, n := range r.children {
+		if minW > n.weight {
+			minW = n.weight
+		}
+		if maxW < n.weight {
+			maxW = n.weight
 		}
 	}
 
+	return maxW - minW
+}
+
+func getTowerRoot(towers map[string]*tower) (*tower, error) {
 	for _, t := range towers {
-		fmt.Println(t)
 		if t.parent == nil {
-			return t.name, t.weight
+			return t, nil
 		}
 	}
 
-	return "", 0
+	return nil, errors.New("No root found")
 }
