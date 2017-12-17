@@ -1,6 +1,8 @@
 package hexed
 
 import (
+	"io/ioutil"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -28,4 +30,18 @@ func TestDistance(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSolveDistance(t *testing.T) {
+	assert := require.New(t)
+	data, _ := ioutil.ReadFile("./input.txt")
+	d := Distance(strings.Split(string(data), ","))
+	assert.Equal(810, d)
+}
+
+func TestSolveMaxDistance(t *testing.T) {
+	assert := require.New(t)
+	data, _ := ioutil.ReadFile("./input.txt")
+	d := MaxDistance(strings.Split(string(data), ","))
+	assert.Equal(1567, d)
 }
